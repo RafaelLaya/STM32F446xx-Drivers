@@ -51,7 +51,7 @@ typedef struct {
 #define GPIO_MODE_IT_FT			5
 #define GPIO_MODE_IT_RFT		6
 
-/* Possible values from @GPIO_OP_Type */
+/* @GPIO_OP_Type */
 #define GPIO_OP_TYPE_PP		0
 #define GPIO_OP_TYPE_OD		1
 
@@ -84,7 +84,7 @@ typedef struct {
 #define GPIO_AF_14			14
 #define GPIO_AF_15			15
 
-/************ APIS SUPPORTED BY THIS DRIVER ************/
+/************ APIS  ************/
 
 /*
  * Peripheral Clock Setup

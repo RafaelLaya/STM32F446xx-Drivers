@@ -7,15 +7,15 @@
 
 #include "stm32f446xx_rcc_driver.h"
 
-
+/*
+ * PLL clock not supported yet
+ */
 
 uint32_t Get_PLL_P_CLK()  {
-	// I will ignore PLL_P for the moment
 	return 16000000U;
 }
 
 uint32_t Get_PLL_R_CLK() {
-	// I will ignore PLL_R for the moment
 	return 16000000U;
 }
 
@@ -24,7 +24,6 @@ uint32_t RCC_Get_PCLK1Freq() {
 
 	srcClock = ((RCC->CFGR) >> RCC_CFGR_SW) && (0x3);
 
-	// actually just simulating clocks other than HSI
 	if(srcClock == 0) {
 		// HSI is fixed in this MCU
 		SYSCLK = 16000000U;
@@ -64,7 +63,6 @@ uint32_t RCC_Get_PCLK2Freq() {
 
 	srcClock = ((RCC->CFGR) >> RCC_CFGR_SW) && (0x3);
 
-	// actually just simulating clocks other than HSI
 	if(srcClock == 0) {
 		// HSI is fixed in this MCU
 		SYSCLK = 16000000U;

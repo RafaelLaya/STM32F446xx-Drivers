@@ -7,6 +7,17 @@
 
 #include "stm32f446xx.h"
 
+/*
+ * @fn				- I2C_PeripheralClockControl
+ * @brief			- Enables or Disables Clock to given I2C peripheral
+ * @param[in]		- Base address of the USART Peripheral
+ * @param[in]		- ENABLE or DISABLE Macro
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void I2C_PeripheralClockControl(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
 		if(pI2Cx == I2C1) {
@@ -27,6 +38,17 @@ void I2C_PeripheralClockControl(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- I2C_GetSR1FlagStatus
+ * @brief			- Retrieves the status of a flag in the SR1 register
+ * @param[in]		- Base address of the USART Peripheral
+ * @param[in]		- The FlagName macro (bit position of the flag)
+ *
+ * @return			- The status of the flag
+ *
+ * @Note			- none
+ *
+ */
 uint8_t I2C_GetSR1FlagStatus(I2C_RegDef_t *pI2Cx, uint32_t FlagName) {
 	if(pI2Cx->SR1 & FlagName) {
 		return FLAG_SET;
@@ -34,6 +56,16 @@ uint8_t I2C_GetSR1FlagStatus(I2C_RegDef_t *pI2Cx, uint32_t FlagName) {
 	return FLAG_RESET;
 }
 
+/*
+ * @fn				- I2C_Init
+ * @brief			- Initializes/Configures the I2C peripheral
+ * @param[in]		- The handle structure of the relevant I2C peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void I2C_Init(I2C_Handle_t *pI2CHandle) {
 	// enable clock
 	I2C_PeripheralClockControl(pI2CHandle->pI2Cx, ENABLE);
@@ -98,10 +130,18 @@ void I2C_Init(I2C_Handle_t *pI2CHandle) {
 
 	pI2CHandle->pI2Cx->TRISE &= ~(0x3f << 0);
 	pI2CHandle->pI2Cx->TRISE |= ((tRise << 0) & (0x3f));
-
-
 }
 
+/*
+ * @fn				- I2C_DeInit
+ * @brief			- De-initializes/Resets the I2C peripheral
+ * @param[in]		- Base address of the peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void I2C_DeInit(I2C_RegDef_t *pI2Cx) {
 	if(pI2Cx == I2C1) {
 		I2C1_REG_RESET();
@@ -112,10 +152,32 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx) {
 	}
 }
 
+/*
+ * @fn				- I2C_GenerateStartCondition
+ * @brief			- Generates the start condition (master)
+ * @param[in]		- Handle structure of the I2C peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void I2C_GenerateStartCondition(I2C_Handle_t *pI2CHandle) {
 	pI2CHandle->pI2Cx->CR1 |= (0x1 << I2C_CR1_START);
 }
 
+/*
+ * @fn				- I2C_ExecuteAddressPhase
+ * @brief			- Executes the address phase
+ * @param[in]		- Base address of the peripheral
+ * @param[in]		- The address of the slave
+ * @param[in]		- The RW_Bit (Read or Write) macro
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx, uint8_t SlaveAddr, uint8_t RW_Bit) {
 	if(RW_Bit == I2C_RW_BIT_WRITE) {
 		pI2Cx->DR = ((SlaveAddr << 1) & ~(0x1));
@@ -124,16 +186,50 @@ static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx, uint8_t SlaveAddr, uint
 	}
 }
 
+/*
+ * @fn				- I2C_ClearADDRFlag
+ * @brief			- Clear the ADDR flag
+ * @param[in]		- Base address of the peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void I2C_ClearADDRFlag(I2C_RegDef_t *pI2Cx) {
 	uint32_t dummy_read = pI2Cx->SR1;
 	dummy_read = pI2Cx->SR2;
 	(void) dummy_read;
 }
 
+/*
+ * @fn				- I2C_GenerateStopCondition
+ * @brief			- Generates the stop condition (master)
+ * @param[in]		- Handle structure of the I2C peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void I2C_GenerateStopCondition(I2C_Handle_t *pI2CHandle) {
 	pI2CHandle->pI2Cx->CR1 |= (0x1 << I2C_CR1_STOP);
 }
 
+/*
+ * @fn				- I2C_MasterSendData
+ * @brief			- Sends data through I2C
+ * @param[in]		- Handle structure of the I2C peripheral
+ * @param[in]		- Points to where the data is
+ * @param[in]		- The length of the data
+ * @param[in]		- The address of the slave who will receive the data
+ * @param[in]		- The repeated start macro
+ *
+ * @return			- none
+ *
+ * @Note			- Block/Poll based
+ *
+ */
 void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint32_t len, uint8_t SlaveAddr, uint8_t RepeatedStart) {
 	// wait for bus to be free (this is done by hardware)
 	// start condition
@@ -172,6 +268,17 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint32_t l
 	}
 }
 
+/*
+ * @fn				- I2C_ManageAcking
+ * @brief			- Enables or Disables ACK Control
+ * @param[in]		- Base address of the peripheral
+ * @param[in]		- ENABLE or DISABLE macro
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void I2C_ManageAcking(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	if(EnOrDi == I2C_ACK_ENABLE) {
 		pI2Cx->CR1 |= (0x1 << I2C_CR1_ACK);
@@ -180,10 +287,34 @@ void I2C_ManageAcking(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- I2C_RestoreAcking
+ * @brief			- Restores ACK control to its configured value
+ * @param[in]		- Handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void I2C_RestoreAcking(I2C_Handle_t *pI2CHandle) {
 	I2C_ManageAcking(pI2CHandle->pI2Cx, pI2CHandle->I2C_Config.ACKControl);
 }
 
+/*
+ * @fn				- I2C_MasterReceiveData
+ * @brief			- receives data through I2C
+ * @param[in]		- Handle structure of the I2C peripheral
+ * @param[in]		- Points to where the data will be stored
+ * @param[in]		- The length of the data
+ * @param[in]		- The address of the slave who will send the data
+ * @param[in]		- The repeated start macro
+ *
+ * @return			- none
+ *
+ * @Note			- Block/Poll based
+ *
+ */
 void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint32_t len, uint8_t SlaveAddr, uint8_t RepeatedStart) {
 	// wait until bus is free
 	// this is done by hardware when start is requested:
@@ -256,6 +387,17 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint32_
 	}
 }
 
+/*
+ * @fn				- I2C_EnableIT_EV, I2C_EnableIT_BU, I2C_EnableIT_ERR, I2C_EnableIT_EV,
+ * 					  I2C_DisableIT_EV, I2C_DisableIT_BU, I2C_DisableIT_ERR, I2C_DisableIT_EV
+ * @brief			- Enable/Disable an interrupt
+ * @param[in]		- Base address to the relevant I2C peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void static I2C_EnableIT_EV(I2C_RegDef_t *pI2Cx) {
 	pI2Cx->CR2 |= (0x1 << I2C_CR2_ITEVTEN);
 }
@@ -278,7 +420,18 @@ void static I2C_DisableIT_ERR(I2C_RegDef_t *pI2Cx) {
 	pI2Cx->CR2 &= ~(0x1 << I2C_CR2_ITERREN);
 }
 
-void I2C_SlaveConfigureCallback(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
+/*
+ * @fn				- I2C_SlaveConfigureAllback
+ * @brief			- Enable/Disable all interrupts
+ * @param[in]		- Base address to the relevant I2C peripheral
+ * @param[in]		- ENABLE or DISABLE macro
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
+void I2C_SlaveConfigureAllback(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
 		I2C_EnableIT_All(pI2Cx);
 	} else {
@@ -286,6 +439,16 @@ void I2C_SlaveConfigureCallback(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- I2C_EnableIT_All
+ * @brief			- Enable all interrupts
+ * @param[in]		- Base address to the relevant I2C peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void I2C_EnableIT_All(I2C_RegDef_t *pI2Cx) {
 	I2C_EnableIT_BU(pI2Cx);
 	I2C_EnableIT_ERR(pI2Cx);
@@ -293,6 +456,16 @@ void I2C_EnableIT_All(I2C_RegDef_t *pI2Cx) {
 
 }
 
+/*
+ * @fn				- I2C_DisableIT_All
+ * @brief			- Disable all interrupts
+ * @param[in]		- Base address to the relevant I2C peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void I2C_DisableIT_All(I2C_RegDef_t *pI2Cx) {
 	I2C_DisableIT_BU(pI2Cx);
 	I2C_DisableIT_ERR(pI2Cx);
@@ -300,11 +473,25 @@ void I2C_DisableIT_All(I2C_RegDef_t *pI2Cx) {
 
 }
 
+/*
+ * @fn				- I2C_MasterSendDataIT
+ * @brief			- Sends data through I2C
+ * @param[in]		- Handle structure of the I2C peripheral
+ * @param[in]		- Points to where the data is stored
+ * @param[in]		- The length of the data
+ * @param[in]		- The address of the slave who will receive the data
+ * @param[in]		- The repeated start macro
+ *
+ * @return			- status of peripheral
+ *
+ * @Note			- Interrupt based
+ *
+ */
 uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint32_t len, uint8_t SlaveAddr, uint8_t RepeatedStart) {
 	if(pI2CHandle->I2C_Config.RxTxStatus != I2C_STATUS_BUSY_IN_RX && pI2CHandle->I2C_Config.RxTxStatus != I2C_STATUS_BUSY_IN_TX) {
 		pI2CHandle->I2C_Config.pTxBuffer = pTxBuffer;
 		pI2CHandle->I2C_Config.TxLen = len;
-		pI2CHandle->I2C_Config.Address = SlaveAddr;
+		pI2CHandle->I2C_Config.Target_Address = SlaveAddr;
 		pI2CHandle->I2C_Config.RepeatedStart = RepeatedStart;
 		pI2CHandle->I2C_Config.RxTxStatus = I2C_STATUS_BUSY_IN_TX;
 
@@ -315,12 +502,26 @@ uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint3
 	return pI2CHandle->I2C_Config.RxTxStatus;
 }
 
+/*
+ * @fn				- I2C_MasterReceiveDataIT
+ * @brief			- Receives data through I2C
+ * @param[in]		- Handle structure of the I2C peripheral
+ * @param[in]		- Points to where the data will be stored
+ * @param[in]		- The length of the data
+ * @param[in]		- The address of the slave who will send the data
+ * @param[in]		- The repeated start macro
+ *
+ * @return			- status of peripheral
+ *
+ * @Note			- Interrupt based
+ *
+ */
 uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint32_t len, uint8_t SlaveAddr, uint8_t RepeatedStart) {
 	if(pI2CHandle->I2C_Config.RxTxStatus != I2C_STATUS_BUSY_IN_RX && pI2CHandle->I2C_Config.RxTxStatus != I2C_STATUS_BUSY_IN_TX) {
 		pI2CHandle->I2C_Config.pRxBuffer = pRxBuffer;
 		pI2CHandle->I2C_Config.RxLen = len;
 		pI2CHandle->I2C_Config.RxSize = len;
-		pI2CHandle->I2C_Config.Address = SlaveAddr;
+		pI2CHandle->I2C_Config.Target_Address = SlaveAddr;
 		pI2CHandle->I2C_Config.RepeatedStart = RepeatedStart;
 		pI2CHandle->I2C_Config.RxTxStatus = I2C_STATUS_BUSY_IN_RX;
 
@@ -331,7 +532,15 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, ui
 	return pI2CHandle->I2C_Config.RxTxStatus;
 }
 
-
+/*
+ * @fn				- I2C_IRQInterruptConfig
+ * @brief			- Enables or Disables interrupts for the given IRQNumber
+ * @param[in]		- The IRQNumber
+ * @param[in] 		- ENABLE or DISABLE macros
+ *
+ * @return			- none
+ *
+ */
 void I2C_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
 		*(NVIC_ISER0 + IRQNumber / 32) |= (0x1 << (IRQNumber % 32));
@@ -340,11 +549,29 @@ void I2C_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- I2C_IRQPriorityConfig
+ * @brief			- Sets the priority of the interrupt for this peripheral
+ * @param[in]		- The IRQNumber
+ * @param[in] 		- Configuration priority
+ *
+ * @return			- none
+ *
+ */
 void I2C_IRQPriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
 	*(NVIC_IPR0 + IRQNumber / 4) &= ~(0xff << ((IRQNumber % 4) * 8));
 	*(NVIC_IPR0 + IRQNumber / 4) |= (IRQPriority << (((IRQNumber % 4) * 8) + 8 - NO_BITS_IMPLEMENTED));
 }
 
+/*
+ * @fn				- I2C_PeripheralControl
+ * @brief			- Enables or disables I2C communication
+ * @param[in]		- The base address of the relevant peripheral
+ * @param[in] 		- ENABLE or DISABLE macro
+ *
+ * @return			- none
+ *
+ */
 void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
 		pI2Cx->CR1 |= (0x1 << I2C_CR1_PE);
@@ -353,6 +580,14 @@ void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- I2C_CloseMasterTx
+ * @brief			- Disables interrupts and resets transmission related fields
+ * @param[in]		- Handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 void I2C_CloseMasterTx(I2C_Handle_t *pI2CHandle) {
 	I2C_DisableIT_EV(pI2CHandle->pI2Cx);
 	I2C_DisableIT_BU(pI2CHandle->pI2Cx);
@@ -363,6 +598,14 @@ void I2C_CloseMasterTx(I2C_Handle_t *pI2CHandle) {
 	pI2CHandle->I2C_Config.RxTxStatus = I2C_STATUS_READY;
 }
 
+/*
+ * @fn				- I2C_CloseMasterRx
+ * @brief			- Disables interrupts and resets reception related fields
+ * @param[in]		- Handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 void I2C_CloseMasterRx(I2C_Handle_t *pI2CHandle) {
 	// disable ITBUFEN and ITEVFEN and ITERR
 
@@ -377,14 +620,41 @@ void I2C_CloseMasterRx(I2C_Handle_t *pI2CHandle) {
 	pI2CHandle->I2C_Config.RxTxStatus = I2C_STATUS_READY;
 }
 
+/*
+ * @fn				- I2C_SlaveSendData
+ * @brief			- Sends data when requested by a master
+ * @param[in]		- Handle structure of the peripheral
+ * @param[in]		- Data to send
+ *
+ * @return			- none
+ *
+ */
 void I2C_SlaveSendData(I2C_Handle_t *pI2CHandle, uint8_t data) {
 	pI2CHandle->pI2Cx->DR = data;
 }
 
+/*
+ * @fn				- I2C_SlaveReceiveData
+ * @brief			- Receives data sent by a master
+ * @param[in]		- Handle structure of the peripheral
+ *
+ * @return			- the received data
+ *
+ */
 uint8_t I2C_SlaveReceiveData(I2C_Handle_t *pI2CHandle) {
 	return (uint8_t) pI2CHandle->pI2Cx->DR;
 }
 
+/*
+ * @fn				- I2C_ClearSTOPF
+ * @brief			- Clears STOPF flag
+ * @param[in]		- Handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ * @note			- none
+ *
+ */
 void I2C_ClearSTOPF(I2C_Handle_t *pI2CHandle) {
 	uint8_t dummy_read;
 	dummy_read = (uint8_t) pI2CHandle->pI2Cx->SR1;
@@ -392,30 +662,29 @@ void I2C_ClearSTOPF(I2C_Handle_t *pI2CHandle) {
 	(void) dummy_read;
 }
 
+/*
+ * @fn				- I2C_EV_IRQhandling
+ * @brief			- Figures out why interrupt occurred and act accordingly
+ * @param[in]		- Handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ * @note			- none
+ *
+ */
 void I2C_EV_IRQhandling(I2C_Handle_t *pI2CHandle) {
-	// figure out whether the Flag/Interrupt was enabled
-	// whether the device is acting as master/slave
-	// check whether we are receiving or transmitting
-	// and act accordingly
 	uint8_t ITEVFEN = ((pI2CHandle->pI2Cx->CR2 >> I2C_CR2_ITEVTEN) & (0x1));
 	uint8_t ITBUFEN = ((pI2CHandle->pI2Cx->CR2 >> I2C_CR2_ITBUFEN) & (0x1));
 	uint8_t MSL = ((pI2CHandle->pI2Cx->SR2 >> I2C_SR2_MSL) & (0x1));
 	uint8_t RxTxStatus = pI2CHandle->I2C_Config.RxTxStatus;
 
-//	uint8_t RepeatedStart = pI2CHandle->I2C_Config.RepeatedStart;
-//	uint8_t RxLen = pI2CHandle->I2C_Config.RxLen;
-//	uint8_t TxLen = pI2CHandle->I2C_Config.TxLen;
-//	uint8_t RxSize = pI2CHandle->I2C_Config.RxSize;
-	// dont forget to restore acking and dont stop if
-	// repeated start
-
 	// SBFlag
 	uint8_t EventFlag = ((pI2CHandle->pI2Cx->SR1 >> I2C_SR1_SB) & (0x1));
 	if(ITEVFEN && EventFlag) {
 		if(MSL && (RxTxStatus == I2C_STATUS_BUSY_IN_TX)) {
-			I2C_ExecuteAddressPhase(pI2CHandle->pI2Cx, pI2CHandle->I2C_Config.Address, I2C_RW_BIT_WRITE);
+			I2C_ExecuteAddressPhase(pI2CHandle->pI2Cx, pI2CHandle->I2C_Config.Target_Address, I2C_RW_BIT_WRITE);
 		} else if(MSL && (RxTxStatus == I2C_STATUS_BUSY_IN_RX)) {
-			I2C_ExecuteAddressPhase(pI2CHandle->pI2Cx, pI2CHandle->I2C_Config.Address, I2C_RW_BIT_READ);
+			I2C_ExecuteAddressPhase(pI2CHandle->pI2Cx, pI2CHandle->I2C_Config.Target_Address, I2C_RW_BIT_READ);
 		} else if(!MSL && (RxTxStatus == I2C_STATUS_BUSY_IN_TX)) {
 
 		} else if(!MSL && (RxTxStatus == I2C_STATUS_BUSY_IN_RX)) {
@@ -523,6 +792,16 @@ void I2C_EV_IRQhandling(I2C_Handle_t *pI2CHandle) {
 	}
 }
 
+/*
+ * @fn				- I2C_ERR_IRQHandling
+ * @brief			- Figures out why interrupt occurred and notify the user application
+ * @param[in]		- Handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ * @note			- none
+ *
+ */
 void I2C_ERR_IRQHandling(I2C_Handle_t *pI2CHandle) {
 	uint8_t ITERR = ((pI2CHandle->pI2Cx->CR2 >> I2C_CR2_ITERREN) & (0x1));
 
@@ -576,6 +855,15 @@ void I2C_ERR_IRQHandling(I2C_Handle_t *pI2CHandle) {
 	}
 }
 
+/*
+ * @fn				- I2C_ApplicationEventCallback
+ * @brief			- Weak function that notifies the user of events related to the relevant I2C
+ * @param[in]		- The base address of the relevant USART
+ * @param[in] 		- I2C_EV Macro
+ *
+ * @return			- none
+ *
+ */
 __weak void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle, uint8_t AppEv) {
 
 }

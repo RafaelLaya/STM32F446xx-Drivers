@@ -12,7 +12,7 @@
 
 /*
  * @fn				- GPIO_PeriClockControl
- * @brief			- Enables or Disabled Clock to given GPIO Port
+ * @brief			- Enables or Disables Clock to given GPIO Port
  * @param[in]		- Base address of the GPIO Peripheral Port
  * @param[in]		- ENABLE or DISABLE Macro
  *
@@ -139,7 +139,7 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle) {
 
 /*
  * @fn				- GPIO_PeriClockControl
- * @brief			- Deinitializes/Resets the given GPIOx peripheral with the given PinConfig
+ * @brief			- De-initializes/Resets the given GPIOx peripheral with the given PinConfig
  * @param[in]		- Base address of GPIO port
  *
  * @return			- none
@@ -284,9 +284,7 @@ void GPIO_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority) {
 
 /*
  * @fn				- GPIO_IRQHandling
- * @brief			- Does the job that has to be done after the interrupt has occurred in order to keep operating
- * 						in the case of GPIO, this is checking if the interrupt request has been made and then
- * 						clearing the request
+ * @brief			- Clears the interrupt request from the EXTI line
  * @param[in]		- Pin Number
  *
  * @return			- none
@@ -300,6 +298,16 @@ void GPIO_IRQHandling(uint8_t PinNumber) {
 	}
 }
 
+/*
+ * @fn				- GPIO_ClearConfig
+ * @brief			- resets the handle structure
+ * @param[in]		- The handle structure to reset
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void GPIO_ClearConfig(GPIO_Handle_t *pHandle){
 	memset(pHandle, 0, sizeof(*pHandle));
 }

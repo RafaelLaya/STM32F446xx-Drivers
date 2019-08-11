@@ -32,6 +32,9 @@
 #define NVIC_ISER2			(__vo uint32_t*) 0xE000E108
 #define NVIC_ISER3			(__vo uint32_t*) 0xE000E10c
 
+/*
+ * Priority levels for the NVIC
+ */
 #define NVIC_IRQ_PRIO0			0
 #define NVIC_IRQ_PRIO1			1
 #define NVIC_IRQ_PRIO2			2
@@ -50,7 +53,7 @@
 #define NVIC_IRQ_PRIO15			15
 
 /*
- * PR Registers
+ * IPR0 Register
  */
 
 #define NVIC_IPR0			(__vo uint32_t*) 0xE000E400
@@ -66,7 +69,6 @@
 /*
  * base addresses of Flash and SRAM memories
  */
-
 #define FLASH_BASEADDR				0x08000000U				/* Flash Memory Starts at this address */
 #define SRAM1_BASEADDR				0x20000000U				/* SRAM1 Memory Starts at this address */
 #define SRAM2_BASEADDR				0x2001C000U				/* SRAM2 Memory Starts at this address */
@@ -176,22 +178,23 @@ typedef struct {
 } RCC_RegDef_t;
 
 typedef struct {
-	__vo uint32_t IMR;				/* Interrupt Mask Register */
-	__vo uint32_t EMR;				/* Event Mask Register */
-	__vo uint32_t RTSR;				/* Rising Trigger Selection Register */
-	__vo uint32_t FTSR;				/* Falling Trigger Selection Register */
-	__vo uint32_t SWIER;			/* Software Interrupt Event Register */
-	__vo uint32_t PR;				/* Pending Request Register */
+	__vo uint32_t IMR;				/* Interrupt Mask Register 						0ffset 0x00 */
+	__vo uint32_t EMR;				/* Event Mask Register 							offset 0x04 */
+	__vo uint32_t RTSR;				/* Rising Trigger Selection Register 			offset 0x08 */
+	__vo uint32_t FTSR;				/* Falling Trigger Selection Register 			offset 0x0C */
+	__vo uint32_t SWIER;			/* Software Interrupt Event Register 			offset 0x10 */
+	__vo uint32_t PR;				/* Pending Request Register 					offset 0x14 */
 } EXTI_RegDef_t ;
 
 typedef struct {
-	__vo uint32_t MEMRMP;			/* Memory remap register */
-	__vo uint32_t PMC;				/* Peripheral Mode Configuration register */
-	__vo uint32_t EXTICR[4];		/* External Interrupt Configuration registers: {EXTICR1, EXTICR2, EXTICR3, EXTICR4} */
+	__vo uint32_t MEMRMP;			/* Memory remap register 							offset 0x00 */
+	__vo uint32_t PMC;				/* Peripheral Mode Configuration register 			offset 0x04 */
+	__vo uint32_t EXTICR[4];		/* External Interrupt Configuration registers:
+									   {EXTICR1, EXTICR2, EXTICR3, EXTICR4} 			offset 0x08 */
 	uint32_t RESERVED_0[2];
-	__vo uint32_t CMPCR;			/* Compensation cell control register */
+	__vo uint32_t CMPCR;			/* Compensation cell control register 				offset 0x20 */
 	uint32_t RESERVED_1[2];
-	__vo uint32_t CFGR;				/* Configuration Register */
+	__vo uint32_t CFGR;				/* Configuration Register 							offset 0x2C */
 } SYSCFG_RegDef_t;
 
 typedef struct {
@@ -207,26 +210,26 @@ typedef struct {
 } SPI_RegDef_t;
 
 typedef struct {
-	__vo uint32_t CR1;
-	__vo uint32_t CR2;
-	__vo uint32_t OAR1;
-	__vo uint32_t OAR2;
-	__vo uint32_t DR;
-	__vo uint32_t SR1;
-	__vo uint32_t SR2;
-	__vo uint32_t CCR;
-	__vo uint32_t TRISE;
-	__vo uint32_t FLTR;
+	__vo uint32_t CR1;			/* Control Register 1			offset 0x00 */
+	__vo uint32_t CR2;			/* Control Register 2			offset 0x04 */
+	__vo uint32_t OAR1;			/* Own Address Register 1		offset 0x08 */
+	__vo uint32_t OAR2;			/* Own Address Register 2		offset 0x0C */
+	__vo uint32_t DR;			/* Data Register				offset 0x10 */
+	__vo uint32_t SR1;			/* Status Register 1			offset 0x14 */
+	__vo uint32_t SR2;			/* Status Register 2			offset 0x18 */
+	__vo uint32_t CCR;			/* Clock Control Register		offset 0x1C */
+	__vo uint32_t TRISE;		/* TRISE Register				offset 0x20 */
+	__vo uint32_t FLTR;			/* FLTR Register				offset 0x24 */
 } I2C_RegDef_t;
 
 typedef struct {
-	__vo uint32_t SR;
-	__vo uint32_t DR;
-	__vo uint32_t BRR;
-	__vo uint32_t CR1;
-	__vo uint32_t CR2;
-	__vo uint32_t CR3;
-	__vo uint32_t GPTR;
+	__vo uint32_t SR;			/* Status Register							offset 0x00 */
+	__vo uint32_t DR;			/* Data Register							offset 0x04 */
+	__vo uint32_t BRR;			/* Baud Rate Register						offset 0x08 */
+	__vo uint32_t CR1;			/* Configuration Register 1					offset 0x0C */
+	__vo uint32_t CR2;			/* Configuration Register 2					offset 0x10 */
+	__vo uint32_t CR3;			/* Configuration Register 3					offset 0x14 */
+	__vo uint32_t GPTR;			/* Guard Time and prescaler Register		offset 0x18 */
 } USART_RegDef_t;
 
 /*
@@ -402,12 +405,12 @@ typedef struct {
 /*
  * USART/UART
  */
-#define USART1_REG_RESET()			do { RCC->APB2RSTR |= (0x1 << 4); RCC->APB2RSTR &= ~(0x1 << 4); } while(0);
-#define USART2_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 17); RCC->APB1RSTR &= ~(0x1 << 17); } while(0);
-#define USART3_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 18); RCC->APB1RSTR &= ~(0x1 << 18); } while(0);
-#define UART4_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 19); RCC->APB1RSTR &= ~(0x1 << 19); } while(0);
-#define UART5_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 20); RCC->APB1RSTR &= ~(0x1 << 20); } while(0);
-#define USART6_REG_RESET()			do { RCC->APB2RSTR |= (0x1 << 5); RCC->APB2RSTR &= ~(0x1 << 5); } while(0);
+#define USART1_REG_RESET()			do { RCC->APB2RSTR |= (0x1 << 4); RCC->APB2RSTR &= ~(0x1 << 4); } while(0)
+#define USART2_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 17); RCC->APB1RSTR &= ~(0x1 << 17); } while(0)
+#define USART3_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 18); RCC->APB1RSTR &= ~(0x1 << 18); } while(0)
+#define UART4_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 19); RCC->APB1RSTR &= ~(0x1 << 19); } while(0)
+#define UART5_REG_RESET()			do { RCC->APB1RSTR |= (0x1 << 20); RCC->APB1RSTR &= ~(0x1 << 20); } while(0)
+#define USART6_REG_RESET()			do { RCC->APB2RSTR |= (0x1 << 5); RCC->APB2RSTR &= ~(0x1 << 5); } while(0)
 
 /*
  * IRQ Numbers/Positions

@@ -11,19 +11,19 @@
 #include "stm32f446xx.h"
 
 typedef struct {
-	uint32_t I2C_SCLSpeed;			/* @I2C_SCLSpeed */
-	uint8_t I2C_DeviceAddress;		/* @I2C_DeviceAddress */
-	uint8_t ACKControl;				/* @ACKControl */
-	uint16_t FMDutyCycle;			/* @FMDutyCycle */
+	uint32_t I2C_SCLSpeed;			/* Possible values from @I2C_SCLSpeed */
+	uint8_t I2C_DeviceAddress;		/* Possible values from Address of this device*/
+	uint8_t ACKControl;				/* Possible values from @ACKControl */
+	uint16_t FMDutyCycle;			/* Possible values from @FMDutyCycle */
 
-	uint8_t RxTxStatus;
+	uint8_t RxTxStatus;				/* Possible values from @Status */
 	uint8_t *pRxBuffer;
 	uint8_t *pTxBuffer;
 	uint8_t TxLen;
-	uint8_t RxLen;
-	uint8_t Address;				/* Address of the slave that this master is communicating with */
-	uint8_t RepeatedStart;
-	uint32_t RxSize;
+	uint8_t RxLen;						/* Current length of the remaining message */
+	uint8_t Target_Address;				/* Address of the slave that this master is communicating with */
+	uint8_t RepeatedStart;				/* Possible values from @Repeated_Start */
+	uint32_t RxSize;					/* Total size of the message */
 } I2C_Config_t;
 
 typedef struct {
@@ -32,9 +32,15 @@ typedef struct {
 
 } I2C_Handle_t;
 
+/*
+ * RW Bit Values for the address phase
+ */
 #define I2C_RW_BIT_READ				1
 #define I2C_RW_BIT_WRITE			0
 
+/*
+ * @Status
+ */
 #define I2C_STATUS_READY			0
 #define I2C_STATUS_BUSY_IN_RX		1
 #define I2C_STATUS_BUSY_IN_TX		2
@@ -53,7 +59,7 @@ typedef struct {
 #define I2C_ACK_DISABLE				0
 
 /*
- * FMDutyCycle
+ * @FMDutyCycle
  */
 #define I2C_FM_DUTY_2				0
 #define I2C_FM_DUTY_16_9			1
@@ -75,6 +81,9 @@ typedef struct {
 #define I2C_FLAG_TIMEOUT			(0x1 << I2C_SR1_TIMEOUT)
 #define I2C_FLAG_SMBALERT			(0x1 << I2C_SR1_SMBALERT)
 
+/*
+ * @Repeated_Start
+ */
 #define I2C_REPEATED_START_NO			RESET
 #define I2C_REPEATED_START_YES			SET
 
@@ -119,7 +128,7 @@ uint8_t I2C_GetSR1FlagStatus(I2C_RegDef_t *pI2Cx, uint32_t FlagName);
 void I2C_ManageAcking(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi);
 
 void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle, uint8_t AppEv);
-void I2C_SlaveConfigureCallback(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi);
+void I2C_SlaveConfigureAllback(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi);
 
 void I2C_EnableIT_All(I2C_RegDef_t *pI2Cx);
 void I2C_DisableIT_All(I2C_RegDef_t *pI2Cx);

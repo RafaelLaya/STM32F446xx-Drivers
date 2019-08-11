@@ -13,7 +13,7 @@ static void SPI_Txe_IT_Handle(SPI_Handle_t *pSPIHandle);
 
 /*
  * @fn				- SPI_PeriClockControl
- * @brief			- Enables or Disabled Clock to given SPI peripheral
+ * @brief			- Enables or Disables Clock to given SPI peripheral
  * @param[in]		- Base address of the SPI Peripheral
  * @param[in]		- ENABLE or DISABLE Macro
  *
@@ -167,16 +167,22 @@ void SPI_SendData(SPI_RegDef_t *pSPI, uint8_t *pTxBuffer, uint32_t len) {
 	}
 }
 
+/*
+ * @fn				- SPI_GetFlagStatus
+ * @brief			- Retrives the flag status FlagName from the SR
+ * @param[in]		- Base address of SPI peripheral
+ * @param[in]		- The name of the Flag from @SPI_Flags in stm32f446xx_spi.driver.h
+ *
+ * @return			- The value of the flag
+ *
+ * @Note			- none
+ *
+ */
 uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t FlagName) {
 	if(pSPIx->SR & FlagName) {
 		return FLAG_SET;
 	}
 	return FLAG_RESET;
-//	if(FlagName == SPI_TXE_FLAG) {
-//		return (pSPIx->SR >> SPI_SR_TXE) & 0x1;
-//	} else if(FlagName == SPI_SR_RXNE) {
-//		return (pSPIx->SR >> SPI_SR_RXNE) & 0x1;
-//	}
 }
 
 /*
@@ -230,7 +236,7 @@ void SPI_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnOrDi) {
 
 /*
  * @fn				- SPI_IRQHandling
- * @brief			- Does what is needed to clear the pending registers
+ * @brief			- Figures why the flag occurred and handles each situation accordingly
  * @param[in]		- A pointer to the handle structure (base address + configuration structure) of the SPI peripheral
  *
  * @return			- none
@@ -267,6 +273,16 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle) {
 	}
 }
 
+/*
+ * @fn				- SPI_Txe_IT_Handle
+ * @brief			- Sens one or two bytes of data and checks if transmission needs to be closed
+ * @param[in]		- A pointer to the handle structure (base address + configuration structure) of the SPI peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void SPI_Txe_IT_Handle(SPI_Handle_t *pSPIHandle) {
 	// check dff
 	if((pSPIHandle->pSPI->CR1 >> SPI_CR1_DFF) & 0x1) {
@@ -288,6 +304,16 @@ static void SPI_Txe_IT_Handle(SPI_Handle_t *pSPIHandle) {
 	}
 }
 
+/*
+ * @fn				- SPI_Txe_IT_Handle
+ * @brief			- Receives one byte of data and checks if transmission should be closed
+ * @param[in]		- A pointer to the handle structure (base address + configuration structure) of the SPI peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void SPI_Rxe_IT_Handle(SPI_Handle_t *pSPIHandle) {
 	// check dff
 	if((pSPIHandle->pSPI->CR1 >> SPI_CR1_DFF) & 0x1) {
@@ -309,6 +335,16 @@ static void SPI_Rxe_IT_Handle(SPI_Handle_t *pSPIHandle) {
 	}
 }
 
+/*
+ * @fn				- SPI_Ovr_IT_Handle
+ * @brief			- Clears the OVR flag and notifies user application
+ * @param[in]		- A pointer to the handle structure (base address + configuration structure) of the SPI peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 static void SPI_Ovr_IT_Handle(SPI_Handle_t *pSPIHandle) {
 	// if error, notify error and clear flag
 	// the clearing sequence is: read DR and then read SR
@@ -321,6 +357,16 @@ static void SPI_Ovr_IT_Handle(SPI_Handle_t *pSPIHandle) {
 	SPI_ApplicationEventCallback(pSPIHandle, SPI_EVENT_OVR_ERR);
 }
 
+/*
+ * @fn				- SPI_CloseReception
+ * @brief			- Resets reception related fields in the handle structure and stops receiving related interrupts
+ * @param[in]		- A pointer to the handle structure (base address + configuration structure) of the SPI peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void SPI_CloseReception(SPI_Handle_t *pSPIHandle) {
 	pSPIHandle->RxLen = 0;
 	pSPIHandle->RxState = SPI_READY;
@@ -328,6 +374,16 @@ void SPI_CloseReception(SPI_Handle_t *pSPIHandle) {
 	pSPIHandle->pSPI->CR2 &= ~(0x1 << SPI_CR2_RXNEIE);
 }
 
+/*
+ * @fn				- SPI_CloseTransmission
+ * @brief			- Resets transmission related fields in the handle structure and stops transmission related interrupts
+ * @param[in]		- A pointer to the handle structure (base address + configuration structure) of the SPI peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle) {
 	pSPIHandle->TxLen = 0;
 	pSPIHandle->TxState = SPI_READY;
@@ -335,6 +391,16 @@ void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle) {
 	pSPIHandle->pTxBuffer = NULL;
 }
 
+/*
+ * @fn				- SPI_ClearOVRFlag
+ * @brief			- Clears the OVR Flag
+ * @param[in]		- A pointer to the handle structure (base address + configuration structure) of the SPI peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void SPI_ClearOVRFlag(SPI_Handle_t *pSPIHandle) {
 	uint8_t data = pSPIHandle->pSPI->DR;
 	uint32_t status = pSPIHandle->pSPI->SR;
@@ -342,6 +408,18 @@ void SPI_ClearOVRFlag(SPI_Handle_t *pSPIHandle) {
 	(void) status;
 }
 
+/*
+ * @fn				- SPI_SendDataWithIT
+ * @brief			- Sends data from pTxBuffer (of length len)
+ * @param[in]		- Base address of the given SPI peripheral
+ * @param[in]		- Pointer where data is
+ * @param[in]		- length of the data
+ *
+ * @return			- Status of SPI
+ *
+ * @Note			- Interrupt based
+ *
+ */
 uint8_t SPI_SendDataWithIT(SPI_Handle_t *pSPIHandle, uint8_t *pTxBuffer, uint32_t len) {
 	uint8_t status = pSPIHandle->TxState;
 	if(status != SPI_BUSY_IN_TX) {
@@ -357,6 +435,18 @@ uint8_t SPI_SendDataWithIT(SPI_Handle_t *pSPIHandle, uint8_t *pTxBuffer, uint32_
 	return status;
 }
 
+/*
+ * @fn				- SPI_ReadDataWithIT
+ * @brief			- Receives data from SPI peripheral related to the pSPIHandle given
+ * @param[in]		- Handle structure of SPI
+ * @param[in]		- Pointer where data will be stored
+ * @param[in]		- length of the remaining data
+ *
+ * @return			- Status of SPI
+ *
+ * @Note			- Interrupt based
+ *
+ */
 uint8_t SPI_ReadDataWithIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t len) {
 	uint8_t status = pSPIHandle->RxState;
 	if(status != SPI_BUSY_IN_RX) {
@@ -389,6 +479,17 @@ void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority) {
 	*(NVIC_IPR0 + IRQNumber / 4) |= (IRQPriority << (((IRQNumber % 4) * 8) + 8 - NO_BITS_IMPLEMENTED));
 }
 
+/*
+ * @fn				- SPI_PeripheralControl
+ * @brief			- Enables or Disables peripheral clock
+ * @param[in]		- Pointer to the base address of the SPI peripheral
+ * @param[in]		- ENABLE or DISABLE Macro
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void SPI_PeripheralControl(SPI_RegDef_t *pSPI, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
 		pSPI->CR1 |= (0x1 << SPI_CR1_SPE);
@@ -397,6 +498,18 @@ void SPI_PeripheralControl(SPI_RegDef_t *pSPI, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- SPI_SSIConfig
+ * @brief			- When using SSM (Software Slave Management) SSI (Internal Slave Select)
+ * 					  This bit's value is forced onto the NSS pin
+ * @param[in]		- Pointer to the base address of the SPI peripheral
+ * @param[in]		- ENABLE or DISABLE Macro
+ *
+ * @return			- none
+ *
+ * @Note			-
+ *
+ */
 void SPI_SSIConfig(SPI_RegDef_t *pSPI, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
 		pSPI->CR1 |= (0x1 << SPI_CR1_SSI);
@@ -405,6 +518,18 @@ void SPI_SSIConfig(SPI_RegDef_t *pSPI, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- SPI_SSOEConfig
+ * @brief			- Enables or disables SSOE. When Set, the unit cannot work in
+ * 					  multimaster configuration
+ * @param[in]		- Pointer to the base address of the SPI peripheral
+ * @param[in]		- ENABLE or DISABLE Macro
+ *
+ * @return			- none
+ *
+ * @Note			-
+ *
+ */
 void SPI_SSOEConfig(SPI_RegDef_t *pSPI, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
 		pSPI->CR2 |= (0x1 << SPI_CR2_SSOE);
@@ -413,6 +538,18 @@ void SPI_SSOEConfig(SPI_RegDef_t *pSPI, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- SPI_ApplicationEventCallback
+ * @brief			- Weak function that the user application must override in order to receive
+ * 				      events notifications
+ * @param[in]		- Pointer to the handle structure of the relevant SPI
+ * @param[in]		- SPI_EV macro
+ *
+ * @return			- none
+ *
+ * @Note			- Should be overridden
+ *
+ */
 __weak void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle, uint8_t event) {
 
 }

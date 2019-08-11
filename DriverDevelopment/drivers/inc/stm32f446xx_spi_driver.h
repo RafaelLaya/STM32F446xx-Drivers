@@ -82,7 +82,7 @@ typedef struct {
 #define SPI_SSM_DI				0
 
 /*
- * SPI Flags
+ * @SPI_Flags
  */
 #define SPI_TXE_FLAG			(1 << SPI_SR_TXE)
 #define SPI_RXNE_FLAG			(1 << SPI_SR_RXNE)

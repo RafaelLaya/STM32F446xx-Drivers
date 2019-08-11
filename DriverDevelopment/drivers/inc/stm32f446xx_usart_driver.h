@@ -11,19 +11,19 @@
 #include "stm32f446xx.h"
 
 typedef struct {
-	uint8_t USART_Mode;
-	uint32_t USART_Baud;
-	uint8_t USART_NoOfStopBits;
-	uint8_t USART_WordLength;
-	uint8_t USART_ParityControl;
-	uint8_t USART_HWFlowControl;
+	uint8_t USART_Mode;					/* Possible values from @USART_Mode */
+	uint32_t USART_Baud;				/* Possible values from @USART_Baud */
+	uint8_t USART_NoOfStopBits;			/* Possible values from @USART_NoOfStopBits */
+	uint8_t USART_WordLength;			/* Possible values from @USART_WordLength */
+	uint8_t USART_ParityControl;		/* Possible values from @USART_ParityControl */
+	uint8_t USART_HWFlowControl;		/* Possible values from @USART_HWFlowControl */
 } USART_Config_t;
 
 typedef struct {
 	USART_RegDef_t *pUSARTx;
 	USART_Config_t USART_Config;
-	uint8_t TxState;
-	uint8_t RxState;
+	uint8_t TxState;					/* Possible values from @Status */
+	uint8_t RxState;					/* Possible values from @Status */
 	uint8_t *TxBuffer;
 	uint8_t *RxBuffer;
 	uint32_t TxLen;
@@ -31,7 +31,7 @@ typedef struct {
 } USART_Handle_t;
 
 /*
- * Status
+ * @Status
  */
 #define USART_TXSTATUS_BUSY_IN_TX					0
 #define USART_RXSTATUS_BUSY_IN_RX					1

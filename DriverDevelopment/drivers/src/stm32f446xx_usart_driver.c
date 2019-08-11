@@ -9,7 +9,15 @@
 
 
 /*
- * Peripheral Clock setup
+ * @fn				- USART_PeriClockControl
+ * @brief			- Enables or Disables Clock to given USART peripheral
+ * @param[in]		- Base address of the USART Peripheral
+ * @param[in]		- ENABLE or DISABLE Macro
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
  */
 void USART_PeriClockControl(USART_RegDef_t *pUSARTx, uint8_t EnorDi) {
 	if(EnorDi == ENABLE) {
@@ -43,6 +51,17 @@ void USART_PeriClockControl(USART_RegDef_t *pUSARTx, uint8_t EnorDi) {
 	}
 }
 
+/*
+ * @fn				- USART_SetBaudRate
+ * @brief			- Selects the baud rate
+ * @param[in]		- Base address of the USART Peripheral
+ * @param[in]		- BaudRate (Hz)
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void USART_SetBaudRate(USART_RegDef_t *pUSARTx, uint32_t BaudRate) {
 	uint32_t APBxCLK = 0;
 	uint8_t over8 = ((pUSARTx->CR1 >> USART_CR1_OVER8) & (0x1));
@@ -78,7 +97,14 @@ void USART_SetBaudRate(USART_RegDef_t *pUSARTx, uint32_t BaudRate) {
 }
 
 /*
- * Init and De-init
+ * @fn				- USART_Init
+ * @brief			- Initializes/Configures the USART peripheral
+ * @param[in]		- Handle structure of the given peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
  */
 void USART_Init(USART_Handle_t *pUSARTHandle) {
 	USART_PeriClockControl(pUSARTHandle->pUSARTx, ENABLE);
@@ -142,6 +168,16 @@ void USART_Init(USART_Handle_t *pUSARTHandle) {
 	pUSARTHandle->RxState = USART_STATUS_READY;
 }
 
+/*
+ * @fn				- USART_DeInit
+ * @brief			- De-initializes/Resetss the USART peripheral
+ * @param[in]		- Base address of the given peripheral
+ *
+ * @return			- none
+ *
+ * @Note			- none
+ *
+ */
 void USART_DeInit(USART_RegDef_t *pUSARTx) {
 	if(pUSARTx == USART1) {
 		USART1_REG_RESET();
@@ -160,7 +196,16 @@ void USART_DeInit(USART_RegDef_t *pUSARTx) {
 
 
 /*
- * Data Send and Receive
+ * @fn				- USART_SendData
+ * @brief			- Sends data from pTxBuffer of length len bytes
+ * @param[in]		- Handle structure of the peripheral
+ * @param[in]		- Address of the buffer where the data is
+ * @param[in]		- Length of the data
+ *
+ * @return			- none
+ *
+ * @Note			- Poll/Block Based
+ *
  */
 void USART_SendData(USART_Handle_t *pUSARTHandle, uint8_t *pTxBuffer, uint32_t len) {
 	uint16_t *pData;
@@ -178,7 +223,7 @@ void USART_SendData(USART_Handle_t *pUSARTHandle, uint8_t *pTxBuffer, uint32_t l
 				// 9 bits no parity
 				// so all 9 bits are data
 				// user is responsible that the bits are positioned appropriately
-				// tip: send word by word (in which case pTxBuffer++ doesn't have any effect :) )
+				// tip: send word by word
 				pUSARTHandle->pUSARTx->DR = (*pData & ((uint16_t)0x1ff));
 				pTxBuffer++;
 				pTxBuffer++;
@@ -194,6 +239,18 @@ void USART_SendData(USART_Handle_t *pUSARTHandle, uint8_t *pTxBuffer, uint32_t l
 	while(!USART_GetFlagStatus(pUSARTHandle->pUSARTx, USART_FLAG_TC));
 }
 
+/*
+ * @fn				- USART_ReceiveData
+ * @brief			- Receives data from the external world
+ * @param[in]		- Handle structure of the peripheral
+ * @param[in]		- Address of the buffer where the data will be stored
+ * @param[in]		- Length of the data
+ *
+ * @return			- none
+ *
+ * @Note			- Poll/Block Based
+ *
+ */
 void USART_ReceiveData(USART_Handle_t *pUSARTHandle, uint8_t *pRxBuffer, uint32_t len) {
 	while(len > 0) {
 		while(!USART_GetFlagStatus(pUSARTHandle->pUSARTx, USART_FLAG_RXNE));
@@ -226,6 +283,14 @@ void USART_ReceiveData(USART_Handle_t *pUSARTHandle, uint8_t *pRxBuffer, uint32_
 	//while(!USART_GetFlagStatus(pUSARTHandle->pUSARTx, USART_FLAG_TC));
 }
 
+/*
+ * @fn				- EnableCommonInterrupts
+ * @brief			- Enables some interrupts useful during reception or transmission
+ * @param[in]		- Base address of the peripheral
+ *
+ * @return			- none
+ *
+ */
 static void EnableCommonInterrupts(USART_RegDef_t *pUSARTx) {
 	pUSARTx->CR3 |= (0x1 << USART_CR3_CTSIE);
 	pUSARTx->CR1 |= (0x1 << USART_CR1_TCIE);
@@ -233,6 +298,17 @@ static void EnableCommonInterrupts(USART_RegDef_t *pUSARTx) {
 	pUSARTx->CR1 |= (0x1 << USART_CR2_LBDIE);
 }
 
+/*
+ * @fn				- USART_SendDataIT
+ * @brief			- Sends data through USART from pTxBuffer of length len bytes
+ * @param[in]		- The handle structure of the peripheral
+ * @param[in]		- The buffer where the data is located
+ * @param[in]		- The length of the data
+ *
+ * @return			- none
+ *
+ * @Note			- Interrupt Based
+ */
 uint8_t USART_SendDataIT(USART_Handle_t *pUSARTHandle,uint8_t *pTxBuffer, uint32_t Len) {
 	if(pUSARTHandle->TxState != USART_TXSTATUS_BUSY_IN_TX) {
 		pUSARTHandle->TxState = USART_TXSTATUS_BUSY_IN_TX;
@@ -245,6 +321,18 @@ uint8_t USART_SendDataIT(USART_Handle_t *pUSARTHandle,uint8_t *pTxBuffer, uint32
 	}
 	return pUSARTHandle->TxState;
 }
+
+/*
+ * @fn				- USART_ReceiveDataIT
+ * @brief			- Reeives data through USART and stores in pRxBuffer.
+ * @param[in]		- The handle structure of the peripheral
+ * @param[in]		- The address where the data will be stored
+ * @param[in]		- The length of the data
+ *
+ * @return			- none
+ *
+ * @Note			- Interrupt Based
+ */
 uint8_t USART_ReceiveDataIT(USART_Handle_t *pUSARTHandle, uint8_t *pRxBuffer, uint32_t Len) {
 	if(pUSARTHandle->RxState != USART_RXSTATUS_BUSY_IN_RX) {
 		pUSARTHandle->RxState = USART_RXSTATUS_BUSY_IN_RX;
@@ -259,72 +347,154 @@ uint8_t USART_ReceiveDataIT(USART_Handle_t *pUSARTHandle, uint8_t *pRxBuffer, ui
 	return pUSARTHandle->RxState;
 }
 
+/*
+ * @fn				- ClearOREFlag8Bits
+ * @brief			- Clears the ORE (8 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint8_t ClearOREFlag8Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0xff));
 }
 
-// returns 16 bits of data, the least significant 9 bits are from DR, the rest are zero-es
+/*
+ * @fn				- ClearOREFlag9Bits
+ * @brief			- Clears the ORE (16 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint16_t ClearOREFlag9Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0x1ff));
 }
 
+/*
+ * @fn				- ClearIDLEFlag8Bits
+ * @brief			- Clears the IDLE (8 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint8_t ClearIDLEFlag8Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0xff));
 }
 
-// returns 16 bits of data, the least significant 9 bits are from DR, the rest are zero-es
+/*
+ * @fn				- ClearIDLEFlag8Bits
+ * @brief			- Clears the IDLE (9 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint16_t ClearIDLEFlag9Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0x1ff));
 }
 
+/*
+ * @fn				- ClearPEFlag8Bits
+ * @brief			- Clears the PE (8 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint8_t ClearPEFlag8Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0xff));
 }
 
-// returns 16 bits of data, the least significant 9 bits are from DR, the rest are zero-es
+/*
+ * @fn				- ClearPEFlag8Bits
+ * @brief			- Clears the PE (9 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint16_t ClearPEFlag9Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0x1ff));
 }
 
+/*
+ * @fn				- ClearNFFlag8Bits
+ * @brief			- Clears the NF (8 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint8_t ClearNFFlag8Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0xff));
 }
 
-// returns 16 bits of data, the least significant 9 bits are from DR, the rest are zero-es
+/*
+ * @fn				- ClearNFFlag8Bits
+ * @brief			- Clears the NF (9 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint16_t ClearNFFlag9Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0x1ff));
 }
 
+/*
+ * @fn				- ClearFEFlag8Bits
+ * @brief			- Clears the FE (8 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint8_t ClearFEFlag8Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0xff));
 }
 
-// returns 16 bits of data, the least significant 9 bits are from DR, the rest are zero-es
+/*
+ * @fn				- ClearFEFlag8Bits
+ * @brief			- Clears the FE (9 bits) flag
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 uint16_t ClearFEFlag9Bits(USART_Handle_t *pHandle) {
 	uint32_t dummy = pHandle->pUSARTx->SR;
 	(void) dummy;
 	return (pHandle->pUSARTx->DR & (0x1ff));
 }
 
-
+/*
+ * @fn				- USART_IRQHandling
+ * @brief			- Identifies which event caused the interrupt and acts accordingly
+ * @param[in]		- The handle structure of the peripheral
+ *
+ * @return			- none
+ *
+ */
 void USART_IRQHandling(USART_Handle_t *pHandle) {
 	uint8_t interruptEnFlag = 0;
 	uint8_t flag = 0;
@@ -489,7 +659,13 @@ void USART_IRQHandling(USART_Handle_t *pHandle) {
 }
 
 /*
- * IRQ Configuration and ISR handling
+ * @fn				- USART_IRQInterruptConfig
+ * @brief			- Enables or Disables interrupts for the given IRQNumber
+ * @param[in]		- The IRQNumber
+ * @param[in] 		- ENABLE or DISABLE macros
+ *
+ * @return			- none
+ *
  */
 void USART_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnorDi) {
 	if(EnorDi == ENABLE) {
@@ -499,6 +675,15 @@ void USART_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnorDi) {
 	}
 }
 
+/*
+ * @fn				- USART_IRQPriorityConfig
+ * @brief			- Sets the priority for the given IRQ Number
+ * @param[in]		- The IRQNumber
+ * @param[in] 		- The priority level
+ *
+ * @return			- none
+ *
+ */
 void USART_IRQPriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
 	*(NVIC_IPR0 + IRQNumber / 4) &= ~(0xff << (IRQNumber % 4) * 8);
 	*(NVIC_IPR0 + IRQNumber / 4) |= (IRQPriority << ((IRQNumber % 4) * 8 + 8 - NO_BITS_IMPLEMENTED));
@@ -506,6 +691,16 @@ void USART_IRQPriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
 
 /*
  * Other Peripheral Control APIs
+ */
+
+/*
+ * @fn				- USART_PeripheralControl
+ * @brief			- Enables or Disables USART communication
+ * @param[in]		- The base address of the relevant USART
+ * @param[in] 		- ENABLE or DISABLE macro
+ *
+ * @return			- none
+ *
  */
 void USART_PeripheralControl(USART_RegDef_t *pUSARTx, uint8_t EnOrDi) {
 	if(EnOrDi == ENABLE) {
@@ -515,17 +710,27 @@ void USART_PeripheralControl(USART_RegDef_t *pUSARTx, uint8_t EnOrDi) {
 	}
 }
 
+/*
+ * @fn				- USART_GetFlagStatus
+ * @brief			- Retrieves the status of a flag in the SR register
+ * @param[in]		- The base address of the relevant USART
+ * @param[in] 		- FlagName macro
+ *
+ * @return			- none
+ *
+ */
 uint8_t USART_GetFlagStatus(USART_RegDef_t *pUSARTx , uint32_t FlagName) {
 	return (pUSARTx->SR >> FlagName) & (0x1);
 }
 
-// TODO: replace flag clearing with this
-void USART_ClearFlag(USART_RegDef_t *pUSARTx, uint16_t StatusFlagName) {
-
-}
-
 /*
- * Application callback
+ * @fn				- USART_ApplicationEventCallback
+ * @brief			- Weak function that notifies the user of events related to the relevant USART
+ * @param[in]		- The base address of the relevant USART
+ * @param[in] 		- USART_EV Macro
+ *
+ * @return			- none
+ *
  */
 __weak void USART_ApplicationEventCallback(USART_Handle_t *pUSARTHandle,uint8_t AppEv) {
 	return;
