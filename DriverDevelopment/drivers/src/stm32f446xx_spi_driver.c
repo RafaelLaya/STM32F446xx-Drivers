@@ -476,7 +476,7 @@ uint8_t SPI_ReadDataWithIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_
  */
 void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority) {
 	*(NVIC_IPR0 + IRQNumber / 4) &= ~(0xff << (8 * (IRQNumber % 4)));
-	*(NVIC_IPR0 + IRQNumber / 4) |= (IRQPriority << (((IRQNumber % 4) * 8) + 8 - NO_BITS_IMPLEMENTED));
+	*(NVIC_IPR0 + IRQNumber / 4) |= (IRQPriority << (((IRQNumber % 4) * 8) + 8 - PRIO_BITS_IMPLEMENTED));
 }
 
 /*

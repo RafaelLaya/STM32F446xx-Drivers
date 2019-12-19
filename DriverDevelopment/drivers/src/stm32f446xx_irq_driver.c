@@ -7,12 +7,26 @@
 
 #include <stm32f446xx_irq_driver.h>
 
+extern void Default_Handler(void);
+
 void IRQ_Dispatch(void);
 
-void IRQ_Dispatch(void)
-{
+typedef struct {
+	IRQ_Handler handler;
+	void *data;
+} Interrupt_Handler;
+
+// The IRQ Numbers are shifted by NonMaskableInt_IRQn which is the smallest (most negative) IRQn in the table
+// So index = irq - NonMaskableInt_IRQn  = irq - (-14) = irq + 14
+static Interrupt_Handler interrupt_table[FMPI2C1_ER_IRQn - NonMaskableInt_IRQn + 1];
+
+void IRQ_Dispatch(void) {
 	/* Hint the SCB (System Control Block) ICSR (Interrupt Control and State Register) contains the currently running interrupt */
+	IRQn_Type irq = (SCB->ICSR & 0x1ff) - 16;
+	Interrupt_Handler it_handler = interrupt_table[irq - NonMaskableInt_IRQn];
+	it_handler.handler(irq, it_handler.data);
 }
+
 /* These overide the STDM32F446xx interrupt handling function is a standard startup file and force IRQ_Dispatch to be called on all interrutps */
 void NMI_Handler(void) __attribute__((alias("IRQ_Dispatch")));
 void HardFault_Handler(void) __attribute__((alias("IRQ_Dispatch")));
@@ -110,52 +124,76 @@ void SPDIF_RX_IRQHandler(void) __attribute__((alias("IRQ_Dispatch")));
 void FMPI2C1_EV_IRQHandler(void) __attribute__((alias("IRQ_Dispatch")));
 void FMPI2C1_ER_IRQHandler(void) __attribute__((alias("IRQ_Dispatch")));
 
-void IRQ_Enable(IRQn_Type irq)
-{
-	/* Need implementation */
+void IRQ_Enable(IRQn_Type irq) {
+	if(irq >= 0) {
+		NVIC->ISER[irq / 32] |= (0x1 << (irq % 32));
+	}
 }
 
-void IRQ_Disable(IRQn_Type irq)
-{
-	/* Need implementation */
+void IRQ_Disable(IRQn_Type irq) {
+	if(irq >= 0) {
+		NVIC->ICER[irq / 32] |= (0x1 << (irq % 32));
+	}
 }
 
-void IRQ_SetData(IRQn_Type irq, void *data)
-{
-	/* Need implementation */
+void IRQ_SetData(IRQn_Type irq, void *data) {
+	interrupt_table[irq - NonMaskableInt_IRQn].data = data;
 }
 
-void *IRQ_GetData(IRQn_Type irq, void *data)
-{
-	/* Need implementation */
-	return 0;
+void *IRQ_GetData(IRQn_Type irq) {
+	return interrupt_table[irq - NonMaskableInt_IRQn].data;
 }
 
-void IRQ_SetPriority(IRQn_Type irq, uint32_t priority)
-{
-	/* Need implementation */
+void IRQ_SetPriority(IRQn_Type irq, uint32_t priority) {
+	if(irq >= 0) {
+		NVIC->IP[(int32_t) irq] = (uint8_t) ((priority << (8U - PRIO_BITS_IMPLEMENTED)) & 0xffU);
+	}
+	else {
+		// The convenient order of the IRQn_Type numbers make it easy so that
+		// Adding 12 to irq results in the correct SHP
+		SCB->SHP[12 + (int32_t) irq] = (uint8_t) (priority << (8U - PRIO_BITS_IMPLEMENTED)) & 0xffU;
+	}
 }
 
-uint32_t IRQ_GetPriority(IRQn_Type irq)
-{
-	/* Need implementation */
-	return 0;
+uint32_t IRQ_GetPriority(IRQn_Type irq) {
+	if(irq >= 0) {
+		return NVIC->IP[(int32_t) irq] >> (8U - PRIO_BITS_IMPLEMENTED);
+	} else {
+		return SCB->SHP[12 + (int32_t) irq] >> (8U - PRIO_BITS_IMPLEMENTED);
+	}
 }
 
-int IRQ_Register(IRQn_Type irq, IRQ_Handler handler, uint32_t priority, void *data)
-{
-	/* Need implementation */
-	return -1;
+int IRQ_Register(IRQn_Type irq, IRQ_Handler handler, uint32_t priority, void *data) {
+	if(irq >= NonMaskableInt_IRQn && irq <= FMPI2C1_ER_IRQn) {
+		interrupt_table[irq - NonMaskableInt_IRQn].handler = handler;
+		interrupt_table[irq - NonMaskableInt_IRQn].data = data;
+		IRQ_Enable(irq);
+		IRQ_SetPriority(irq, priority);
+		return IRQ_SUCCESS;
+	}
+	return IRQ_NO_SUCCESS;
 }
 
-int IRQ_Unregister(int irq)
-{
-	/* Need implementation */
-	return -1;
+int IRQ_Unregister(int irq) {
+	if(irq >= NonMaskableInt_IRQn && irq <= FMPI2C1_ER_IRQn) {
+		// if an IRQ is not registered, the default_handler() is used with NULL for opaque data
+		interrupt_table[irq - NonMaskableInt_IRQn].handler = &Default_Handler_Wrapper;
+		interrupt_table[irq - NonMaskableInt_IRQn].data = NULL;
+		IRQ_Disable(irq);
+		return IRQ_SUCCESS;
+	}
+	return IRQ_NO_SUCCESS;
 }
 
-int IRQ_Init(void)
-{
-	/* Need implementation */
-	return -1;
+void Default_Handler_Wrapper(IRQn_Type irq, void *data) {
+	Default_Handler();
+}
+
+int IRQ_Init(void) {
+	for(int i = NonMaskableInt_IRQn; i <= FMPI2C1_ER_IRQn; i++) {
+		if(IRQ_Unregister(i) == IRQ_NO_SUCCESS) {
+			return IRQ_NO_SUCCESS;
+		}
+	}
+	return IRQ_SUCCESS;
 }

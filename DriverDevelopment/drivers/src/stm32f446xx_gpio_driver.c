@@ -279,7 +279,7 @@ void GPIO_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnOrDi) {
  */
 void GPIO_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority) {
 	*(NVIC_IPR0 + IRQNumber / 4) &= ~(0xff << (8 * (IRQNumber % 4)));
-	*(NVIC_IPR0 + IRQNumber / 4) |= IRQPriority << ((8 * (IRQNumber % 4)) + 8 - NO_BITS_IMPLEMENTED);
+	*(NVIC_IPR0 + IRQNumber / 4) |= IRQPriority << ((8 * (IRQNumber % 4)) + 8 - PRIO_BITS_IMPLEMENTED);
 }
 
 /*
