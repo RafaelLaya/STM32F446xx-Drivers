@@ -1819,6 +1819,7 @@ __STATIC_INLINE void __NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 }
 
 
+
 /**
   \brief   Get Interrupt Priority
   \details Reads the priority of a device specific interrupt or a processor exception.

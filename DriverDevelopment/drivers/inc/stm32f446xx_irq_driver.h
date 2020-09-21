@@ -13,13 +13,15 @@
 #ifndef _STM32F446XX_IRQ_DRIVER_H_
 #define _STM32F446XX_IRQ_DRIVER_H_
 
+#include "stm32f446xx.h"
 #include <stdint.h>
+
+#define IRQ_SUCCESS				 1
+#define IRQ_NO_SUCCESS 			-1
 
 /* Allow the use of cmsis interrupt types which are undefined in the project
  * the valid range is -14 to to the last STMF446xx device interrupt with 0
  * being the first STMF446xx device interrupt */
-typedef int32_t IRQn_Type;
-
 /* Prototype for new interruption handler */
 typedef void (*IRQ_Handler)(IRQn_Type irq, void *data);
 
@@ -29,7 +31,7 @@ void IRQ_Disable(IRQn_Type irq);
 
 /* Get or set the specific opaque data for an interrupt */
 void IRQ_SetData(IRQn_Type irq, void *data);
-void *IRQ_GetData(IRQn_Type irq, void *data);
+void *IRQ_GetData(IRQn_Type irq);
 
 /* Get or set the specific interrupt priority */
 void IRQ_SetPriority(IRQn_Type irq, uint32_t priority);
@@ -41,5 +43,8 @@ int IRQ_Unregister(int irq);
 
 /* Initialize the dynamic interrupt handling driver */
 int IRQ_Init(void);
+
+/* Default IRQ_Handler calls Default_Handler() */
+void Default_Handler_Wrapper(IRQn_Type irq, void *data);
 
 #endif

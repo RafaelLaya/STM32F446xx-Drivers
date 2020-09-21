@@ -686,7 +686,7 @@ void USART_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnorDi) {
  */
 void USART_IRQPriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
 	*(NVIC_IPR0 + IRQNumber / 4) &= ~(0xff << (IRQNumber % 4) * 8);
-	*(NVIC_IPR0 + IRQNumber / 4) |= (IRQPriority << ((IRQNumber % 4) * 8 + 8 - NO_BITS_IMPLEMENTED));
+	*(NVIC_IPR0 + IRQNumber / 4) |= (IRQPriority << ((IRQNumber % 4) * 8 + 8 - PRIO_BITS_IMPLEMENTED));
 }
 
 /*
