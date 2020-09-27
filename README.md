@@ -25,7 +25,7 @@ This is a bare-metal layer and everything is self-contained in this repository.
 * Calls to USART_GetFlagStatus() and USART_ClearFlag() allow you to read and clear flags, respectively
 
 ## SPI
-* Enable the clock to the peripheral with SPI_PeriClockControl()
+* Enable the clock to the peripheral with `SPI_PeriClockControl()`
 * Declare a SPI_Handle_t structure and fill with initialization information, then initialize with a call to SPI_Init()
 * SPI_PeripheralControl() can be used to enable or disable the peripheral
 * Send data with SPI_SendData() or SPI_SendDataWithIT(). The former polls and the latter uses interrupts
