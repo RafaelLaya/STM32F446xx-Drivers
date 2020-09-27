@@ -15,10 +15,10 @@ This is a bare-metal layer and everything is self-contained in this repository.
 
 ## UART
 * Enable the clock to the peripheral with `USART_PeriClockControl()`
-* Declare a `USART_Handle_t` structure and fill with initialization information, and initialize with a call to USART_Init()
+* Declare a `USART_Handle_t` structure and fill with initialization information, and initialize with a call to `USART_Init()`
 * If using interrupts, use `USART_IRQPriorityConfig()` to configure priority for this UART. Then `USART_IRQInterruptConfig()` to enable or disable the interrupt line.
 * Call `USART_PeripheralControl()` to enable or disable the peripheral. Call `USART_IRQHandling()` as soon as possible in the ISR 
-* Send data with `USART_SendData()` or USART_SendDataIT(). The former polls and the latter uses interrupts
+* Send data with `USART_SendData()` or `USART_SendDataIT()`. The former polls and the latter uses interrupts
 * Receive data with `USART_ReceiveData()` or `USART_ReceiveDataIT()`, the former polls and the latter uses interrupts
 * If using interrupts, you might want to implement the callback `USART_ApplicationEventCallback()`
 * You can call `USART_DeInit()` to reset the peripheral
@@ -26,19 +26,19 @@ This is a bare-metal layer and everything is self-contained in this repository.
 
 ## SPI
 * Enable the clock to the peripheral with `SPI_PeriClockControl()`
-* Declare a `SPI_Handle_t` structure and fill with initialization information, then initialize with a call to SPI_Init()
+* Declare a `SPI_Handle_t` structure and fill with initialization information, then initialize with a call to `SPI_Init()`
 * `SPI_PeripheralControl()` can be used to enable or disable the peripheral
 * Send data with `SPI_SendData()` or `SPI_SendDataWithIT()`. The former polls and the latter uses interrupts
 * Receive data with `SPI_ReadData()` or `SPI_ReadDataWithIT()`. The former polls and the latter uses interrupts
 * If using interrupts, call `SPI_IRQPriorityConfig()` to configure priority. Then call `SPI_IRQInterruptConfig()` to enable or disable the interrupt line. The function `SPI_IRQHandling()` must be called as soon as possible in the ISR. 
-* If using interrupts, you might want to implement the callback SPI_ApplicationEventCallback()
+* If using interrupts, you might want to implement the callback `SPI_ApplicationEventCallback()`
 * You can call `SPI_DeInit()` to reset the peripheral
 * Calls to `SPI_GetFlagStatus()` allow you to read flags
 * SSI and SSOE are supported and enabled/disabled through `SPI_SSIConfig()` and `SPI_SSOEConfig()`
 
 ## GPIO
 * Enable the clock to the peripheral with `GPIO_PeriClockControl()`
-* Declare a `GPIO_Handle_t  structure and fill with initialization information, then initialize with a call to `GPIO_Init()`
+* Declare a `GPIO_Handle_t` structure and fill with initialization information, then initialize with a call to `GPIO_Init()`
 * Read a pin with `GPIO_ReadFromInputPin()` or a whole port with `GPIO_ReadFromInputPort()`
 * Write to a pin with `GPIO_WriteToOutputPin()` or a port with `GPIO_WriteToOutputPort()`. You can also toggle an output pin with `GPIO_ToggleOutputPin()`
 * If using interrupts, call `GPIO_IRQPriorityConfig()` to configure priority. Then call `GPIO_IRQInterruptConfig()` to enable or disable the interrupt line. The function `GPIO_IRQHandling()` must be called as soon as possible within the ISR
@@ -46,7 +46,7 @@ This is a bare-metal layer and everything is self-contained in this repository.
 
 ## I2C
 * Enable the clock to the peripheral with `I2C_PeripheralClockControl()`
-* Declare an `I2C_Handle_t` structure and fill with initialization information, then initialize with a call to I2C_Init()
+* Declare an `I2C_Handle_t` structure and fill with initialization information, then initialize with a call to `I2C_Init()`
 * Use `I2C_ManageAcking()` to configure acknowledge control
 * As a master device, you can send data with `I2C_MasterSendData()` or `I2C_MasterSendDataIT()`. The former polls while the latter uses interrupts
 * Use `I2C_PeripheralControl()` to enable or disable the peripheral
