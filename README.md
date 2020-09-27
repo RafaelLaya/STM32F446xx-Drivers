@@ -54,3 +54,12 @@ This is a bare-metal layer and everything is self-contained in this repository.
 * As a slave device, you can respond with I2C_SlaveSendData() or I2C_SlaveReceiveData(). 
 * If using interrupts, call I2C_IRQPriorityConfig() to configure priority. Then call I2C_IRQInterruptConfig() to enable or disable the interrupt line. The funciton I2C_EV_IRQhandling() must be called as soon as possible within the ISR. Optionally, call I2C_ERR_IRQHandling() to get a callback when an error is detected. You might want to implement the callback I2C_ApplicationEventCallback()
 * You can call I2C_DeInit() to reset the peripheral
+
+## Dynamic IRQ
+* Always call IRQ_Init() to initialize the dynamic IRQ system
+* An ISR must have the following type (irq is the IRQ Number and data is the opaque data): typedef void (*IRQ_Handler)(IRQn_Type irq, void *data); 
+* Register the ISR with IRQ_Register() and unregister with IRQ_Unregister()
+* Configure the priority with IRQ_SetPriority(). The current priority can be retrieved with IRQ_GetPriority().
+* Enable the interrupt line with IRQ_Enable() and disable with IRQ_Disable()
+* Change the opaque data with IRQ_SetData()
+* Retrieve the opaque data outside of the ISR with IRQ_GetData()
