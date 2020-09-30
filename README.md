@@ -70,9 +70,9 @@ whenever the button is not being pressed. Let's use the on-board LED and user bu
 
 The first thing is to design the circuitry. This is done for us since we are using on-board components. Second, we need to select which pins to use. Since we are using on-board components, we need to look at the schematics. The schematics can be found in the user manual which can be downloaded from ST's website <a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f446re.html"> click here to go to ST's website </a>. From the schematics, we know that PA5 (Port A, Pin 5) is connected to the LED, and PC13 (Port C, Pin 13) is connected to the push-button. From the schematics, we can also see that PC13 is pulled to high by a pull-up resistor. PC 13 is driven to low when the button is pressed. When PC13 is Low (pressed), we will turn on the LED (PA5). When PC13 is High (not pressed), we will turn off the LED (PA5).
 
-<img src="images/LED.PNG?raw=true"/>	
+<img src="images/led.png?raw=true"/>	
 
-<img src="images/Button.PNG?raw=true"/>
+<img src="images/button.png?raw=true"/>
 
 Now let's dive into the code. The general procedure for these drivers is to:
 
