@@ -63,3 +63,106 @@ This is a bare-metal layer and everything is self-contained in this repository.
 * Enable the interrupt line with `IRQ_Enable()` and disable with `IRQ_Disable()`
 * Change the opaque data with `IRQ_SetData()`
 * Retrieve the opaque data outside of the ISR with `IRQ_GetData()`
+
+# Applied Example
+Let's say you want to make a simple application where you'd like to turn on an LED whenever a button is pressed, but you want the LED off
+whenever the button is not being pressed. Let's use the on-board LED and user button for this example.
+
+The first thing is to design the circuitry. This is done for us since we are using on-board components. Second, we need to select which pins to use. Since we are using on-board components, we need to look at the schematics. The schematics can be found in the user manual which can be downloaded from ST's website <a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f446re.html"> click here to go to ST's website </a>. From the schematics, we know that PA5 (Port A, Pin 5) is connected to the LED, and PC13 (Port C, Pin 13) is connected to the push-button. From the schematics, we can also see that PC13 is pulled to high by a pull-up resistor. PC 13 is driven to low when the button is pressed. When PC13 is Low (pressed), we will turn on the LED (PA5). When PC13 is High (not pressed), we will turn off the LED (PA5).
+
+<img src="images/LED.PNG?raw=true"/>	
+
+<img src="images/Button.PNG?raw=true"/>
+
+Now let's dive into the code. The general procedure for these drivers is to:
+
+1. Create a handler. The handler keeps track of configurations and it keeps a pointer to the base address of the peripheral. Pointers to the base address of the peripherals have already been defined for you. 
+2. Fill the configurations.
+3. Enable the clock, and initialize the desired configuration.
+4. If using interrupts, configure the priority, register the handler, and then enable the interrupt.
+
+```C
+// 1. Create Handles
+GPIO_Handle_t GPIOHandle_C13;
+GPIO_Handle_t GPIOHandle_A5;
+  
+// 1. Point to GPIO Port C and A
+GPIOHandle_C13.pGPIO = GPIOC;
+GPIOHandle_A5.pGPIO = GPIOA;
+  
+// 2. Configurations
+GPIOHandle_C13.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
+GPIOHandle_C13.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_13;
+GPIOHandle_C13.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+  
+GPIOHandle_A5.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+GPIOHandle_A5.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_5;
+GPIOHandle_A5.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
+GPIOHandle_A5.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+GPIOHandle_A5.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+  
+// 3. Enable Clock
+GPIO_PeriClockControl(GPIOHandle_C13.pGPIO, ENABLE);
+GPIO_PeriClockControl(GPIOHandle_A5.pGPIO, ENABLE);
+  
+// 3. Initialize
+GPIO_Init(&GPIOHandle_C13);
+GPIO_Init(&GPIOHandle_A5);
+```
+
+Now, let's add the logic:
+
+```C
+while(1) {
+    // if !High -> if Low -> If pressed -> turn LED on
+    if(!GPIO_ReadFromInputPin(GPIOHandle_C13.pGPIO, GPIOHandle_C13.GPIO_PinConfig.GPIO_PinNumber)) {
+        GPIO_WriteToOutputPin(GPIOHandle_A5.pGPIO, GPIOHandle_A5.GPIO_PinConfig.GPIO_PinNumber, SET);
+    } else {
+        GPIO_WriteToOutputPin(GPIOHandle_A5.pGPIO, GPIOHandle_A5.GPIO_PinConfig.GPIO_PinNumber, RESET);
+    }
+}
+```
+
+Thus the whole program can be written like this:
+
+```C
+#include "stm32f446xx.h"
+
+int main(void) {
+    // Create Handles
+    GPIO_Handle_t GPIOHandle_C13;
+    GPIO_Handle_t GPIOHandle_A5;
+    
+    // Point to GPIO Port C and A
+    GPIOHandle_C13.pGPIO = GPIOC;
+    GPIOHandle_A5.pGPIO = GPIOA;
+  
+    // Configurations
+    GPIOHandle_C13.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
+    GPIOHandle_C13.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_13;
+    GPIOHandle_C13.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+  
+    GPIOHandle_A5.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+    GPIOHandle_A5.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_5;
+    GPIOHandle_A5.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
+    GPIOHandle_A5.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+    GPIOHandle_A5.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+  
+    // Enable Clock
+    GPIO_PeriClockControl(GPIOHandle_C13.pGPIO, ENABLE);
+    GPIO_PeriClockControl(GPIOHandle_A5.pGPIO, ENABLE);
+  
+    // Initialize
+    GPIO_Init(&GPIOHandle_C13);
+    GPIO_Init(&GPIOHandle_A5);
+  
+    while(1) {
+        // if !High -> if Low -> If pressed -> turn LED on
+ 	if(!GPIO_ReadFromInputPin(GPIOHandle_C13.pGPIO, GPIOHandle_C13.GPIO_PinConfig.GPIO_PinNumber)) {
+   	    GPIO_WriteToOutputPin(GPIOHandle_A5.pGPIO, GPIOHandle_A5.GPIO_PinConfig.GPIO_PinNumber, SET);
+	} else {
+	    GPIO_WriteToOutputPin(GPIOHandle_A5.pGPIO, GPIOHandle_A5.GPIO_PinConfig.GPIO_PinNumber, RESET);
+	}
+    }
+}
+```
